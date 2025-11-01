@@ -112,7 +112,7 @@ public class LoginAdmin extends AppCompatActivity {
             return;
         }
 
-        firebaseAuth .signInWithEmailAndPassword(email, password)
+        firebaseAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         String userId = firebaseAuth.getCurrentUser ().getUid();

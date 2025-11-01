@@ -65,31 +65,77 @@ public class LoginResearcher extends AppCompatActivity {
         googleSignInClient = GoogleSignIn.getClient(this, gso);
     }
 
-    private void registerUser () {
-        String email = emailEditText.getText().toString().trim();
-        String password = passwordEditText.getText().toString().trim();
+//    private void registerUser () {
+//        String email = emailEditText.getText().toString().trim();
+//        String password = passwordEditText.getText().toString().trim();
+//
+//        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+//            Snackbar.make(findViewById(R.id.main), "Please enter a valid email", Snackbar.LENGTH_SHORT).show();
+//            return;
+//        }
+//
+//        if (password.length() < 6) {
+//            Snackbar.make(findViewById(R.id.main), "Password must be at least 6 characters", Snackbar.LENGTH_SHORT).show();
+//            return;
+//        }
+//
+//        firebaseAuth.createUserWithEmailAndPassword(email, password)
+//                .addOnCompleteListener(task -> {
+//            if (task.isSuccessful() && firebaseAuth.getCurrentUser() != null) {
+//                String userId = firebaseAuth.getCurrentUser().getUid();
+//                String userName = email.split("@")[0]; // Extract username from email
+//                checkIfUserExists(userId, email, userName,""); // Check if user exists in Realtime Database
+//            } else {
+//                showSnackbar("Registration Failed: " + (task.getException() != null ? task.getException().getMessage() : ""), false);
+//            }
+//        });
+//    }
+private void registerUser() {
+    String email = emailEditText.getText().toString().trim();
+    String password = passwordEditText.getText().toString().trim();
 
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            Snackbar.make(findViewById(R.id.main), "Please enter a valid email", Snackbar.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (password.length() < 6) {
-            Snackbar.make(findViewById(R.id.main), "Password must be at least 6 characters", Snackbar.LENGTH_SHORT).show();
-            return;
-        }
-
-        firebaseAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> {
-            if (task.isSuccessful() && firebaseAuth.getCurrentUser () != null) {
-                String userId = firebaseAuth.getCurrentUser ().getUid();
-                String userName = email.split("@")[0]; // Extract username from email
-                checkIfUserExists(userId, email, userName,""); // Check if user exists in Realtime Database
-            } else {
-                showSnackbar("Registration Failed: " + (task.getException() != null ? task.getException().getMessage() : ""), false);
-            }
-        });
+    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        showSnackbar("Please enter a valid email", false);
+        return;
     }
+
+    if (password.length() < 6) {
+        showSnackbar("Password must be at least 6 characters", false);
+        return;
+    }
+
+    firebaseAuth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful() && firebaseAuth.getCurrentUser() != null) {
+                    String userId = firebaseAuth.getCurrentUser().getUid();
+                    String userName = email.split("@")[0];
+                    checkIfUserExists(userId, email, userName, "");
+                } else {
+                    Exception e = task.getException();
+                    if (e != null && e.getMessage() != null && e.getMessage().contains("already in use")) {
+                        // 🔁 Account already exists — try signing in instead
+                        signInExistingUser(email, password);
+                    } else {
+                        showSnackbar("Registration Failed: " + e.getMessage(), false);
+                    }
+                }
+            });
+}
+
+    private void signInExistingUser(String email, String password) {
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && firebaseAuth.getCurrentUser() != null) {
+                        String userId = firebaseAuth.getCurrentUser().getUid();
+                        String userName = email.split("@")[0];
+                        checkIfUserExists(userId, email, userName, "");
+                    } else {
+                        showSnackbar("Sign-in Failed: " +
+                                (task.getException() != null ? task.getException().getMessage() : ""), false);
+                    }
+                });
+    }
+
 
     private void checkIfUserExists(String userId, String email, String userName, String profilePhotoUrl) {
         String[] s=userName.split(" ");
